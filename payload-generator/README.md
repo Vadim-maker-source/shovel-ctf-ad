@@ -1,6 +1,6 @@
 # CTF payload generator
 
-Читает Suricata EVE JSON и создаёт локальные артефакты для ручного анализа. Не отправляет запросы.
+Запускается на той же Ubuntu, где работают Shovel и Suricata. Читает локальный EVE JSON и создаёт артефакты для ручного анализа. Не отправляет запросы.
 
 ```bash
 chmod +x install.sh
@@ -8,4 +8,4 @@ chmod +x install.sh
 ./run.sh --eve /var/log/suricata/eve.json
 ```
 
-Через SSHFS: `sshfs user@ubuntu:/var/log/suricata ./remote-suricata` затем `./run.sh --eve ./remote-suricata/eve.json`.
+Результаты появляются в `artifacts/`. SSH-туннель и Docker для генератора не нужны.
