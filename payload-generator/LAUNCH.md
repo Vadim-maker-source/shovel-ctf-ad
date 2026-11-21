@@ -5,13 +5,13 @@
 ```text
 Ubuntu: Shovel + Suricata + payload-generator
   ├─ localhost:8000 — панель Shovel
-  └─ /var/log/suricata/eve.json — источник alert’ов
+  └─ localhost:8000/api/flow — источник alert’ов
 ```
 
 ## 1. Ubuntu: запустить Shovel
 
 ```bash
-cd ~/shovel
+cd "$HOME/shovel"
 ./start.sh
 ```
 
@@ -19,7 +19,7 @@ cd ~/shovel
 
 ```bash
 curl http://127.0.0.1:8000
-sudo test -f /var/log/suricata/eve.json
+curl http://127.0.0.1:8000/api/flow
 ```
 
 Если EVE-файл находится в другом месте, посмотри mount контейнера:
@@ -31,42 +31,41 @@ sudo docker inspect shovel-suricata-1 \
 
 ## 2. Ubuntu: установить генератор
 
-Из каталога `~/shovel/payload-generator`:
+Из каталога `$HOME/shovel/payload-generator`:
 
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-## 3. Ubuntu: запустить генератор на локальном EVE-файле
+## 3. Ubuntu: запустить генератор через API Shovel
 
 ```bash
-cd ~/shovel/payload-generator
-./run.sh --eve /var/log/suricata/eve.json
+cd "$HOME/shovel/payload-generator"
+mkdir -p "$HOME/shovel/generated"
+./run.sh
 ```
 
-Генератор читает только события `event_type=alert` и создаёт результаты здесь:
+Генератор читает HTTP-потоки с Suricata signatures через Shovel API и создаёт результаты здесь:
 
 ```text
-payload-generator/artifacts/
+$HOME/shovel/generated/
 ```
 
 Для каждого нового SID создаётся каталог с:
 
 ```text
-event.json      # событие с замаскированными секретами
-payloads.json   # варианты шаблонов
-replay.py       # Python-черновик для локального клона
+event.json      # сведения об alert и HTTP-транзакциях, секретные заголовки замаскированы
+replay.py       # replay-заготовка Shovel; включает тело POST, если оно захвачено
 README.md       # краткая информация об алерте
 ```
 
-## 4. Если EVE-файл доступен только внутри контейнера
+## 4. Альтернатива: EVE JSON
 
-На Ubuntu передай поток в локальный генератор через `docker exec`:
+Если у вас отдельно настроен EVE JSON, передай путь через `--eve`. В этой конфигурации Shovel пишет события в базу, поэтому файла EVE по умолчанию нет.
 
 ```bash
-sudo docker exec -i shovel-suricata-1 tail -F /var/log/suricata/eve.json \
-  | ./run.sh --eve -
+./run.sh --eve /path/to/eve.json
 ```
 
 Уточни имя контейнера командой:
@@ -82,8 +81,8 @@ sudo docker ps --format '{{.Names}}'
 На Ubuntu останови Shovel без удаления данных:
 
 ```bash
-cd ~/shovel
+cd "$HOME/shovel"
 ./stop.sh
 ```
 
-Генератор не отправляет созданные payload’ы автоматически. Он сохраняет артефакты на Ubuntu для проверки.
+Генератор не отправляет replay автоматически. Он сохраняет артефакты на Ubuntu для проверки. Shovel API возвращает не более 100 последних потоков за запрос, поэтому при высокой нагрузке возможен пропуск.
