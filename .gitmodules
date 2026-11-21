@@ -1,0 +1,6 @@
+[submodule "shovel"]
+	path = shovel
+	url = https://github.com/FCSC-FR/shovel.git
+[submodule "vanya_ctf_superfarm"]
+	path = vanya_ctf_superfarm
+	url = https://github.com/Iam-Mil/vanya_ctf_superfarm.git
